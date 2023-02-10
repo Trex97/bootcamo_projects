@@ -1,4 +1,4 @@
-# bootcamo_Projects
+# bootcamp_Projects
 
 Data science bootcamp
 
