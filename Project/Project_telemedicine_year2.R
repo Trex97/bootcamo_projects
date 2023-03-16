@@ -35,12 +35,33 @@ tele <- df %>%
 
 
 
-## unique patient telemed
+## list unique patient telemed
 list_unique <- data.frame(pid = unique(tele$pid),
                           n = 1)
 
 list_unique
 head(list_unique)
+
+#---------------------------------------#
+#1
+## count unique patient
+library(dplyr)
+tele <- tele %>%
+  mutate(unique_id = group_indices(., pid))
+
+print(max(tele$unique_id))
+
+
+#2
+
+tele <- tele %>%
+  mutate(unique_var = ifelse(duplicated(pid), 0, 1))
+
+test_data <- tele %>%
+  select(pid,unique_id,unique_var)
+view(test_data)
+#----------------------------------------#
+
 
 ## data frame  visit-unique patient tele
 count_visit <- tele %>%
