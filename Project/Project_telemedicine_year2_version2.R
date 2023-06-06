@@ -5,7 +5,7 @@
 #                   "lubridate"))
 #library(plotly)
 #library(corrplot)
-
+library(ggplot2)
 library(readr)
 library(tidyverse)
 library(glue)
@@ -191,6 +191,26 @@ tele %>%
   count() %>%
   arrange(desc(n)) %>%
   head(20)
+#1 I10   32729
+#2 E119  21574
+#3 F2000  9035
+#4 F2003  6280
+#5 F840   5965
+#6 F900   4188
+#7 N40    4023
+#8 F2002  3014
+#9 F322   2744
+#10 J459   2576
+#11 H903   2458
+#12 F062   2347
+#13 F809   2268
+#14 E785   2191
+#15 F200   2162
+#16 F412   2098
+#17 F419   2010
+#18 C509   1981
+#19 F321   1945
+#20 I251   1849
 
 
 #* 2.2  22 Disease group (ICD10 chapters)
@@ -266,7 +286,19 @@ tele <- tele %>%
 
 check <- tele %>%
   group_by(title)%>%
-  count()
+  count() %>%
+  arrange(desc(n))
+#1 Mental and behavioural disorders                     94727
+#2 Diseases of the circulatory system                   43847
+#3 Endocrine, nutritional and metabolic diseases        33255
+#4 Neoplasms                                            13960
+#5 Factors influencing health status and contact with … 12468
+#6 Diseases of the musculoskeletal system and connecti… 12217
+#7 Diseases of the nervous system                       11247
+#8 Diseases of the genitourinary system                  8248
+#9 Diseases of the respiratory system                    7382
+#10 Certain infectious and parasitic diseases             3667
+
 
 
 
@@ -289,11 +321,222 @@ tele <- tele %>%
   ))
 
 
-tele %>%
+check <- tele %>%
   group_by(NHSO_policy) %>%
+  count() 
+sum(check$NHSO_policy)
+
+#1           1  32921
+#2           2     57
+#3           3  94727
+#4           4   4051
+#5           5  13960
+#6           6 113331
+
+#tele %>%
+#  filter(NHSO_policy == 1) %>%
+#  group_by(pdx) %>%
+#  count()
+
+#*2.4 Age group - 6 desease group 
+
+table(tele$age_group,tele$NHSO_policy)
+#                       1     2     3     4     5     6
+#age group 0-5        2     0  3066    80   106  4838
+#age group 6-15       7     0 10159   301   216  5662
+#age group 15 -19   179     1 17323   234   747  8807
+#age group 30-59  10450    15 46537  1256  5258 35622
+#age group 60+    22283    41 17642  2180  7633 58402
+
+glimpse(tele)
+
+#***Question 3. WHERE
+#* 3.1 Health region 
+tele %>%
+  group_by(zone)%>%
+  count()
+#   zone      n
+#   <int>  <int>
+#1     1   1745
+#2     2  10403
+#3     3    804
+#4     4    516
+#5     5  18874
+#6     6   9965
+#7     7   3033
+#8     8  21852
+#9     9  12693
+#10    10   1463
+#11    11  55069
+#12    12   4362
+#13    13 118268
+
+#* 3.2 Province 
+tele %>%
+  group_by(province_name)%>%
+  count() %>%
+  arrange(desc(n))
+#   province_name      n
+#1 กรุงเทพฯ       118268
+#2 สุราษฎร์ธานี      54258
+#3 กาญจนบุรี        13924
+#4 ชัยภูมิ           11589
+#5 บึงกาฬ           6900
+#6 อุดรธานี          6497
+#7 สมุทรปราการ      6429
+#8 ตาก             6231
+#9 สุพรรณบุรี         4912
+#10 หนองคาย         3123
+
+
+#* 3.3 HNAME
+tele %>%
+  group_by(hname)%>%
+  count() %>%
+  arrange(desc(n))
+#   hname                         n
+#1 รพ.สวนสราญรมย์             52952
+#2 รพ.รามาธิบดี  มหาวิทยาลัยมหิดล 41085
+#3 สถาบันกัลยาณ์ราชนครินทร์       19175
+#4 รพ.เวชการุณย์รัศมิ์            14192
+#5 รพ.พหลพลพยุหเสนา           13924
+#6 รพ.ราชพิพัฒน์                 7772
+#7 รพ.ศิริราช                   6844
+#8 รพ.ยุวประสาทไวทโยปถัมภ์       6429
+#9 สถาบันประสาทวิทยา            6232
+#10 รพ.สิรินธร                   5973
+
+#* 3.4 Health region - 6 disease group 
+table(zone = tele$zone,NHSO_policy = tele$NHSO_policy)
+#NHSO_policy
+#zone     1     2     3     4     5     6
+#1    376     0    70    25    98  1176
+#2   4441     0  1640   106    50  4166
+#3    303     0   154    17     8   322
+#4      0     0    74     0     3   439
+#5   3467     0   909   791   254 13453
+#6   1657     0  6350    30     9  1919
+#7    780     0   225    80    66  1882
+#8   6116    29   983   481   539 13704
+#9   4718     0   289   935    20  6731
+#10   150     1    66     3   295   948
+#11   263     0 52848     8     2  1948
+#12  1843     0    54    53    35  2377
+#13  8807    27 31065  1522 12581 64266
+
+#tele %>%
+#  group_by(zone,NHSO_policy) %>%
+#  count()
+
+
+#* 3.5 Province - 6 disease group 
+table(Province = tele$province_name,NHSO_policy = tele$NHSO_policy)
+#* 3.6 HNAME - 6 disease group 
+check <- table(hospital_name = tele$hname,NHSO_policy = tele$NHSO_policy)
+check <- data.frame(check)
+write_csv(check,"check.csv")
+
+
+#***Question 4. WHEN
+# copy variable date_adm for separate 
+tele <- tele %>%
+  mutate(date_adm2 = date_adm)
+#separate date_adm 
+tele <- tele %>%
+  separate(date_adm2,c("d","m","y"))
+glimpse(tele)
+#change thai year to global year 
+tele <- tele %>%
+  mutate(yy = as.numeric(y)) %>%
+  mutate(yy= yy -543 )
+
+#change month from 1,2,3 to 01,02,03
+tele <- tele %>%
+  mutate(mm = as.numeric(m)) 
+tele$mm <- sprintf("%02d",tele$mm)
+
+#change date from 1,2,3 to 01,02,03
+tele <- tele %>%
+  mutate(dd = as.numeric(d)) 
+tele$dd <- sprintf("%02d",tele$dd)
+
+##glue new format for new_date 
+tele <- tele %>%
+  mutate(new_date = glue("{dd}-{mm}-{yy}"))
+glimpse(tele)
+
+##re type variable to date 
+tele$new_date <- dmy(tele$new_date)
+glimpse(tele)
+
+##create new variable day, month, year, weekday, fullmonth 
+tele <- tele %>%
+  mutate(day = day(new_date),
+         month = month(new_date),
+         year = year(new_date),
+         full_month = months(new_date,abbr = F),
+         week_day = weekdays(new_date,abbr = FALSE))
+glimpse(tele)
+
+
+
+#* 4.1 Number of visits grouped by month
+tele <- tele %>%
+  mutate(year_month =format(tele$new_date, "%Y-%m"))
+
+month_visit<-tele %>%
+  group_by(year_month) %>%
   count()
 
-tele %>%
-  filter(NHSO_policy == 1) %>%
-  group_by(pdx) %>%
-  count()
+# Convert the year_month variable to a Date type
+month_visit$year_month <- ym(month_visit$year_month)
+
+# Create a new variable for the year
+month_visit$year <- format(month_visit$year_month, "%Y")
+
+histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill = n)) +
+  geom_col() +
+  theme_minimal() +
+  xlab("Date") +
+  scale_fill_gradient(low = "yellow", high = "red") +
+  ylab("Month-Year") +
+  geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3) +
+  scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
+  scale_color_manual(values = c("darkblue", "darkgreen", "pink2"))
+
+
+
+
+
+#trend for each year
+#trend_plots <- lapply(unique(month_visit$year), function(year) {
+#  data <- month_visit[month_visit$year == year, ]
+#  plot <- ggplot(data = data, mapping = aes(x = year_month, y = n)) +
+#    geom_line(color = "blue") +
+#    scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
+#    ylab("Visit") +
+#    ggtitle(year)
+#  plot
+#})
+#library(gridExtra)
+#combined_plot <- grid.arrange(histogram, grobs = trend_plots, nrow = 2)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
