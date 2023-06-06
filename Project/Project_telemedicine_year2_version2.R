@@ -497,46 +497,11 @@ month_visit$year <- format(month_visit$year_month, "%Y")
 histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill = n)) +
   geom_col() +
   theme_minimal() +
-  xlab("Date") +
+  xlab("Timeline") +
   scale_fill_gradient(low = "yellow", high = "red") +
-  ylab("Month-Year") +
+  ylab("Visit") +
   geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3) +
   scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
   geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
   scale_color_manual(values = c("darkblue", "darkgreen", "pink2"))
-
-
-
-
-
-#trend for each year
-#trend_plots <- lapply(unique(month_visit$year), function(year) {
-#  data <- month_visit[month_visit$year == year, ]
-#  plot <- ggplot(data = data, mapping = aes(x = year_month, y = n)) +
-#    geom_line(color = "blue") +
-#    scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
-#    ylab("Visit") +
-#    ggtitle(year)
-#  plot
-#})
-#library(gridExtra)
-#combined_plot <- grid.arrange(histogram, grobs = trend_plots, nrow = 2)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
