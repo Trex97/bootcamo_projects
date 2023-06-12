@@ -1,7 +1,7 @@
 
 # Package install  --------------------------------------------------------
 #install.packages(c("tidyverse",
-#                   "patchwork", 
+#                   "patchwork",
 #                   "lubridate"))
 #library(plotly)
 #library(corrplot)
@@ -311,14 +311,46 @@ check <- tele %>%
 #5. Cancers	 (Neoplasms)		-> C00–D48
 #6. Other diseases			-> Other
 
+#tele <- tele %>%
+#  mutate(NHSO_policy= case_when(
+#    pdx == "I10"|pdx == "I11"|pdx == "I119"|pdx == "I12"|pdx == "I129"|pdx == "I13"|pdx == "I131"|pdx == "I132"|pdx == "I139"|pdx == "I15"|pdx == "I151"|pdx == "I152"|pdx == "I158"|pdx == "I159" ~ 1 ,
+#    pdx == "E10"|pdx == "E11"|pdx == "E12"|pdx == "E13"|pdx == "E14" ~ 2 ,
+#    chapter == 5 ~ 3,
+#    pdx == "J40"|pdx == "J41"|pdx == "J411"|pdx == "J418"|pdx == "J42"|pdx == "J43"|pdx == "J431"|pdx == "J432"|pdx == "J438"|pdx == "J439"|pdx == "J44"|pdx == "J441"|pdx == "J448"|pdx == "J449"|pdx == "J45"|pdx == "J451"|pdx == "J459"|pdx == "J46"|pdx == "J47" ~ 4 ,
+#    chapter == 2 ~ 5 ,
+#    TRUE ~ 6
+#  ))
+
 tele <- tele %>%
   mutate(NHSO_policy= case_when(
-    pdx == "I10"|pdx == "I11"|pdx == "I119"|pdx == "I12"|pdx == "I129"|pdx == "I13"|pdx == "I131"|pdx == "I132"|pdx == "I139"|pdx == "I15"|pdx == "I151"|pdx == "I152"|pdx == "I158"|pdx == "I159" ~ 1 ,
-    pdx == "E10"|pdx == "E11"|pdx == "E12"|pdx == "E13"|pdx == "E14" ~ 2 ,
+    pdx %in% c("I10","I111","I112","I113","I114","I115","I116","I117","I118","I119","I121","I122","I123","I124","I125","I126","I127","I128","I129","I133","I134","I135","I136","I137","I138","I139","I14","I15") ~ 1,
+    pdx %in% c("E109","E119","E129","E139","E149","E100","E110","E120","E130","E140","E101","E111","E121","E131","E141","E102","E112","E122","E132","E142","E103","E113","E123","E133","E143","E104","E114","E124","E134","E144","E105","E115","E125","E135","E145","E106","E116","E126","E136","E146","E107","E117","E127","E137","E147","E118","E128","E138","E148")~ 2,
     chapter == 5 ~ 3,
-    pdx == "J40"|pdx == "J41"|pdx == "J411"|pdx == "J418"|pdx == "J42"|pdx == "J43"|pdx == "J431"|pdx == "J432"|pdx == "J438"|pdx == "J439"|pdx == "J44"|pdx == "J441"|pdx == "J448"|pdx == "J449"|pdx == "J45"|pdx == "J451"|pdx == "J459"|pdx == "J46"|pdx == "J47" ~ 4 ,
+    pdx %in% c("J45","J46") ~ 4,
     chapter == 2 ~ 5 ,
     TRUE ~ 6
+  ))
+
+tele %>%
+  group_by(NHSO_policy) %>%
+  count()
+
+#NHSO_policy     n
+#1           1 32817
+#2           2 25967
+#3           3 94727
+#4           4    52
+#5           5 13960
+#6           6 91524
+
+tele <- tele %>%
+  mutate(NHSO_policy_des = case_when(
+    NHSO_policy == 1 ~ "Hypertension",
+    NHSO_policy == 2 ~ "Diabetes",
+    NHSO_policy == 3 ~ "Mental health",
+    NHSO_policy == 4 ~ "Asthma",
+    NHSO_policy == 5 ~ "Cancers",
+    NHSO_policy == 6 ~ "Other",
   ))
 
 
@@ -326,13 +358,22 @@ check <- tele %>%
   group_by(NHSO_policy) %>%
   count() 
 sum(check$NHSO_policy)
-
+# result from after new code ICD10.
 #1           1  32921
 #2           2     57
 #3           3  94727
 #4           4   4051
 #5           5  13960
 #6           6 113331
+
+
+policy <- tele %>%
+  group_by(NHSO_policy,NHSO_policy_des) %>%
+  count()
+
+
+ggplot(data = policy , mapping = aes(x = NHSO_policy_des, y = n)) +
+  geom_col()
 
 #tele %>%
 #  filter(NHSO_policy == 1) %>%
