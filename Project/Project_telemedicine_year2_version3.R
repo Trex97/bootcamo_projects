@@ -323,25 +323,31 @@ check <- tele %>%
 
 tele <- tele %>%
   mutate(NHSO_policy= case_when(
-    pdx %in% c("I10","I111","I112","I113","I114","I115","I116","I117","I118","I119","I121","I122","I123","I124","I125","I126","I127","I128","I129","I133","I134","I135","I136","I137","I138","I139","I14","I15") ~ 1,
+    pdx %in% c("I10","I111","I112","I113","I114","I115","I116","I117","I118","I119","I121","I122","I123","I124","I125","I126","I127","I128","I129","I133","I134","I135","I136","I137","I138","I139","I14","I15","I150","I151","I152","I158","I159") ~ 1,
     pdx %in% c("E109","E119","E129","E139","E149","E100","E110","E120","E130","E140","E101","E111","E121","E131","E141","E102","E112","E122","E132","E142","E103","E113","E123","E133","E143","E104","E114","E124","E134","E144","E105","E115","E125","E135","E145","E106","E116","E126","E136","E146","E107","E117","E127","E137","E147","E118","E128","E138","E148")~ 2,
     chapter == 5 ~ 3,
-    pdx %in% c("J45","J46") ~ 4,
+    pdx %in% c("J45","J46","J450","J451","J452","J458","J459") ~ 4,
     chapter == 2 ~ 5 ,
     TRUE ~ 6
   ))
+
+check <- tele %>%
+  filter(block_char == "J") %>%
+  group_by(pdx) %>%
+  count()
+
 
 tele %>%
   group_by(NHSO_policy) %>%
   count()
 
 #NHSO_policy     n
-#1           1 32817
+#1           1 32917
 #2           2 25967
 #3           3 94727
-#4           4    52
+#4           4  2706
 #5           5 13960
-#6           6 91524
+#6           6 88770
 
 tele <- tele %>%
   mutate(NHSO_policy_des = case_when(
@@ -353,6 +359,12 @@ tele <- tele %>%
     NHSO_policy == 6 ~ "Other",
   ))
 
+
+
+
+tele %>%
+  group_by(NHSO_policy,NHSO_policy_des) %>%
+  count()
 
 check <- tele %>%
   group_by(NHSO_policy) %>%
@@ -368,12 +380,85 @@ sum(check$NHSO_policy)
 
 
 policy <- tele %>%
-  group_by(NHSO_policy,NHSO_policy_des) %>%
+  group_by(NHSO_policy,NHSO_policy_des,year_month) %>%
   count()
 
+library(tidyverse)
+library(hrbrthemes)
+library(kableExtra)
+options(knitr.table.format = "html")
+library(babynames)
+library(streamgraph)
+library(viridis)
+library(DT)
+library(plotly)
+figure_policy1 <- policy %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=NHSO_policy_des,fill = NHSO_policy_des)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 3) +
+  scale_color_viridis(discrete = TRUE) +
+  scale_color_manual(values=c("darkred", "darkblue", "darkgreen", "orange","purple","gold")) +
+  geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3)+
+  theme(legend.position="none", plot.title = element_text(size=30)) +
+  ggtitle("disease treand") +
+  theme_minimal() + 
+  theme(axis.text = element_text(angle = 90, hjust = 1))
 
-ggplot(data = policy , mapping = aes(x = NHSO_policy_des, y = n)) +
-  geom_col()
+
+policy %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=NHSO_policy_des,fill = NHSO_policy_des)) +
+  geom_col() + 
+  scale_color_viridis(discrete = TRUE) +
+  geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3)+
+  theme(legend.position="none", plot.title = element_text(size=30)) +
+  ggtitle("disease treand") +
+  theme_minimal() + 
+  theme(axis.text = element_text(angle = 90, hjust = 1))
+
+policy2  <- policy  %>%
+  mutate(NHSO_policy_des_2= NHSO_policy_des)
+
+figure_policy2  <-  policy2 %>%
+  ggplot( aes(x=year_month, y=n)) +
+  geom_line(data = policy2 , aes(group = NHSO_policy_des_2), color="darkblue", size=1.5, alpha=0.5) +
+  geom_line(aes(color= NHSO_policy_des_2), color="#69b3a2", size=1.2 ) +
+  scale_color_viridis(discrete = TRUE) +
+  theme_ipsum() +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    panel.grid = element_blank()
+  ) +
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  ggtitle("disease trend") +
+  facet_wrap(~ NHSO_policy_des_2)
+
+figure_policy1/figure_policy2
+
+figure_policy1/result_alldisease
+
+
+
+# animation trend disease
+policy3 <- tele %>%
+  group_by(NHSO_policy,NHSO_policy_des,year) %>%
+  count()
+
+test <- policy3 %>%
+  ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
+  geom_line(size = 1.5) +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Trend telemedicine service") +
+  theme_minimal() +
+  ylab("Number of service") +
+  transition_reveal(year)
+
+
+# Save at gif:
+#anim_save("gif_disease.gif", animation = test)
+
+
 
 #tele %>%
 #  filter(NHSO_policy == 1) %>%
@@ -382,15 +467,16 @@ ggplot(data = policy , mapping = aes(x = NHSO_policy_des, y = n)) +
 
 #*2.4 Age group - 6 desease group 
 
-table(tele$age_group,tele$NHSO_policy)
-#                       1     2     3     4     5     6
-#age group 0-5        2     0  3066    80   106  4838
-#age group 6-15       7     0 10159   301   216  5662
-#age group 15 -19   179     1 17323   234   747  8807
-#age group 30-59  10450    15 46537  1256  5258 35622
-#age group 60+    22283    41 17642  2180  7633 58402
+table(tele$NHSO_policy_des,tele$age_group)
+#               age group 0-5 age group 6-24 age group 25-59 age group 60+
+# Asthma                   82            498            1118          1008
+# Cancers                 106            688            5533          7633
+# Diabetes                  1            239           10148         15579
+# Hypertension              2             79           10556         22280
+# Mental health          3066          20278           53741         17642
+# Other                  4835          11341           28555         44039
 
-glimpse(tele)
+
 
 #***Question 3. WHERE
 #* 3.1 Health region 
@@ -449,22 +535,23 @@ tele %>%
 #10 รพ.สิรินธร                   5973
 
 #* 3.4 Health region - 6 disease group 
-table(zone = tele$zone,NHSO_policy = tele$NHSO_policy)
-#NHSO_policy
-#zone     1     2     3     4     5     6
-#1    376     0    70    25    98  1176
-#2   4441     0  1640   106    50  4166
-#3    303     0   154    17     8   322
-#4      0     0    74     0     3   439
-#5   3467     0   909   791   254 13453
-#6   1657     0  6350    30     9  1919
-#7    780     0   225    80    66  1882
-#8   6116    29   983   481   539 13704
-#9   4718     0   289   935    20  6731
-#10   150     1    66     3   295   948
-#11   263     0 52848     8     2  1948
-#12  1843     0    54    53    35  2377
-#13  8807    27 31065  1522 12581 64266
+table(zone = tele$zone,NHSO_policy = tele$NHSO_policy_des)
+
+# NHSO_policy
+# zone Asthma Cancers Diabetes Hypertension Mental health Other
+# 1      20      98      143          376            70  1038
+# 2      64      50     1814         4441          1640  2394
+# 3      12       8       97          303           154   230
+# 4       0       3        0            0            74   439
+# 5     760     254     1393         3467           909 12091
+# 6      20       9     1065         1657          6350   864
+# 7      67      66      773          780           225  1122
+# 8     348     539     7802         6115           983  6065
+# 9     662      20     5849         4718           289  1155
+# 10      1     295      360          150            66   591
+# 11      5       2      249          263         52848  1702
+# 12     30      35      696         1843            54  1704
+# 13    717   12581     5726         8804         31065 59375
 
 #tele %>%
 #  group_by(zone,NHSO_policy) %>%
@@ -472,12 +559,20 @@ table(zone = tele$zone,NHSO_policy = tele$NHSO_policy)
 
 
 #* 3.5 Province - 6 disease group 
-table(Province = tele$province_name,NHSO_policy = tele$NHSO_policy)
+head(table(Province = tele$province_name,NHSO_policy = tele$NHSO_policy_des))
+
+# NHSO_policy
+# Province    Asthma Cancers Diabetes Hypertension Mental health Other
+# กรุงเทพฯ      717   12581     5726         8804         31065 59375
+# กาญจนบุรี      758     254      172          369           908 11463
+# กาฬสินธุ์        14       5      155           91             4   114
+# กำแพงเพชร      0       4        3           95             0    26
+# ขอนแก่น         5      43      452          431           189   207
+# จันทบุรี         13       2       42           63             9   283
+
 #* 3.6 HNAME - 6 disease group 
 check <- table(hospital_name = tele$hname,NHSO_policy = tele$NHSO_policy)
-check <- data.frame(check)
-write_csv(check,"check.csv")
-
+head(check)
 
 #***Question 4. WHEN
 # copy variable date_adm for separate 
@@ -517,6 +612,7 @@ tele <- tele %>%
          month = month(new_date),
          year = year(new_date),
          full_month = months(new_date,abbr = F),
+         full_month2 = months(new_date,abbr = T),
          week_day = weekdays(new_date,abbr = FALSE))
 glimpse(tele)
 
@@ -546,4 +642,157 @@ histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill
   scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
   geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
-  scale_color_manual(values = c("darkblue", "darkgreen", "pink2"))
+  scale_color_manual(values = c("darkblue", "plum", "wheat"))
+
+
+#*4.2 Number of visits <-->  6 disease gr. grouped by month
+#*
+# Libraries
+library(tidyverse)
+library(hrbrthemes)
+library(kableExtra)
+options(knitr.table.format = "html")
+library(babynames)
+library(streamgraph)
+library(viridis)
+library(DT)
+library(plotly)
+
+
+policy <- tele %>%
+  group_by(NHSO_policy,NHSO_policy_des,year_month) %>%
+  count()
+
+figure_hypertension <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Hypertension", "Hypertension", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Hypertension service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    axis.title.x = element_blank()
+  )
+
+figure_Asthma <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Asthma", "Asthma", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Asthma service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+figure_Cancers <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Cancers", "Cancers", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Cancers service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+figure_Diabetes <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Diabetes", "Diabetes", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Diabetes service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+  )
+
+figure_mental <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Mental health", "Mental health", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Mental health service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14)
+  )
+
+
+figure_Other <- policy %>%
+  mutate( highlight=ifelse(NHSO_policy_des == "Other", "1r", "Other")) %>%
+  ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=highlight, size=highlight)) +
+  geom_line() +
+  scale_color_manual(values = c("#69b3a2", "lightgrey")) +
+  scale_size_manual(values=c(1.5,0.8)) +
+  theme(legend.position="none") +
+  theme_minimal() +
+  ylab("Number of service")+
+  theme(axis.text = element_text(angle = 90, hjust = 1))+
+  geom_label( x="2022-08", y=7000, label="Other service", size=5, color="#69b3a2") +
+  theme(
+    legend.position="none",
+    plot.title = element_text(size=14),
+    axis.title.x = element_blank()
+  )
+
+result_alldisease <- figure_Asthma+figure_Cancers+figure_Diabetes+figure_hypertension+figure_mental+figure_Other
+
+
+glimpse(tele)
+
+#GIF. disease trend animation
+
+
+policy3 <- tele %>%
+  group_by(NHSO_policy,NHSO_policy_des,year) %>%
+  count()
+
+test <- policy3 %>%
+  ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
+  geom_line(size = 1.5) +
+  geom_point() +
+  scale_color_viridis(discrete = TRUE) +
+  ggtitle("Trend telemedicine service") +
+  theme_minimal() +
+  ylab("Number of service") +
+  transition_reveal(year)
+
+
+# Save at gif:
+anim_save("gif_disease.gif", animation = test)
