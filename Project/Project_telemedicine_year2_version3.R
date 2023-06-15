@@ -439,24 +439,6 @@ figure_policy1/result_alldisease
 
 
 
-# animation trend disease
-policy3 <- tele %>%
-  group_by(NHSO_policy,NHSO_policy_des,year) %>%
-  count()
-
-test <- policy3 %>%
-  ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
-  geom_line(size = 1.5) +
-  geom_point() +
-  scale_color_viridis(discrete = TRUE) +
-  ggtitle("Trend telemedicine service") +
-  theme_minimal() +
-  ylab("Number of service") +
-  transition_reveal(year)
-
-
-# Save at gif:
-#anim_save("gif_disease.gif", animation = test)
 
 
 
@@ -639,10 +621,10 @@ histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill
   scale_fill_gradient(low = "yellow", high = "red") +
   ylab("Visit") +
   geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3) +
-  scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 0)) +
+  scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 5)) +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
   geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
-  scale_color_manual(values = c("darkblue", "plum", "wheat"))
+  scale_color_manual(values = c("#69b3a2", "#FF69B4", "#ADFF2F"))
 
 
 #*4.2 Number of visits <-->  6 disease gr. grouped by month
@@ -777,6 +759,11 @@ result_alldisease <- figure_Asthma+figure_Cancers+figure_Diabetes+figure_hyperte
 glimpse(tele)
 
 #GIF. disease trend animation
+# libraries:
+library(ggplot2)
+library(gganimate)
+library(babynames)
+library(hrbrthemes)
 
 
 policy3 <- tele %>%
@@ -796,3 +783,93 @@ test <- policy3 %>%
 
 # Save at gif:
 anim_save("gif_disease.gif", animation = test)
+
+
+
+
+
+
+# Special part - unique patient by disease --------------------------------
+
+# unique patient by disease
+tele <- tele %>%
+  group_by(pid, NHSO_policy_des) %>%
+  mutate(unique_var_pid_pdx = ifelse(row_number() == 1, 1, 0)) %>%
+  ungroup()
+
+# select variable 
+test <- tele %>%
+  select(pid,unique_id,NHSO_policy_des,unique_var_pid_pdx)
+
+#group unique for check people uses telemedicine more than 1 desease
+test2 <- test %>%
+  group_by(unique_id,NHSO_policy_des) %>%
+  count(unique_var_pid_pdx)
+
+test3 <- test2 %>%
+  filter(unique_var_pid_pdx == 1 , n >1 )
+
+#count unique patient telemedicine service (unique pid-disease)
+count_unique_pid_disease <- tele %>%
+  filter(unique_var_pid_pdx == 1) %>%
+  group_by(NHSO_policy_des) %>%
+  count()
+
+#numper of patien (unique pid-disease)
+#unique pid = 110,153 ,unique(pid,disease =116,100)
+sum(count_unique_pid_disease$n) #116100
+
+
+#*Descriptive each disease
+#*ASTHMA
+
+
+des_asthma_unique <- tele %>%
+  filter(unique_var_pid_pdx == 1) %>%
+  filter(NHSO_policy_des == "Asthma") %>%
+  summarise(
+    min = min(age),
+    max = max(age),
+    mean = mean(age),
+    sd = sd(age),
+    median = median(age),
+    q1 = quantile(age,0.25),
+    q2 = quantile(age,0.50),
+    q3 = quantile(age,0.75),
+    iqr = IQR(age),
+    mode = Modes(tele$age))
+
+patient_asthma <- tele %>%
+  filter(unique_var_pid_pdx == 1) %>%
+  filter(NHSO_policy_des == "Asthma") %>%
+  count() 
+
+gender_asthma <- tele %>%
+  filter(unique_var_pid_pdx == 1) %>%
+  filter(NHSO_policy_des == "Asthma") %>%
+  group_by(gender) %>%
+  count()
+
+agegroup_asthma <- tele %>%
+  filter(unique_var_pid_pdx == 1) %>%
+  filter(NHSO_policy_des == "Asthma") %>%
+  group_by(age_group) %>%
+  count()
+
+
+
+top5_pdx_month <- tele %>%
+  select(year_month,pdx) %>%
+  group_by(year_month, pdx) %>% 
+  count()
+
+top5_pdx_month2 <- top5_pdx_month %>%
+  group_by(year_month) %>%
+  top_n(5, n) %>%
+  arrange(year_month, desc(n))
+
+top5_pdx_month2 %>%
+  ggplot( aes(x=year_month, y=n, group=pdx, color=pdx)) +
+  geom_line(size =1.5 )+
+  theme_minimal()+
+  theme(axis.text = element_text(angle = 90, hjust = 1))
