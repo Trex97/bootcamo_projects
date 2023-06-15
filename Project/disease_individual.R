@@ -284,10 +284,9 @@ anim_save("gif_disease.gif", animation = test)
 
 
 
-
+#-------------------------------------------------------------------------------------
 
 # count_frequency_of_users
-
 
 visit_by_pid <- tele %>%
   group_by(pid) %>%
@@ -315,14 +314,14 @@ ggplot(data = visit_by_pid, mapping =  aes( y = n )) +
   geom_boxplot()
 
 
-
-test  <- head(tele,6) %>%
-  mutate(unique_var_pid_pdx = ifelse(duplicated(pid,NHSO_policy_des), 0, 1))%>%
-  arrange(unique_id)
-
-
-test2 <- test %>%
-  select(pid,unique_id,pdx,NHSO_policy_des,unique_var_pid_pdx)
+# ????? 
+# test  <- head(tele,6) %>%
+#   mutate(unique_var_pid_pdx = ifelse(duplicated(pid,NHSO_policy_des), 0, 1))%>%
+#   arrange(unique_id)
+# 
+# 
+# test2 <- test %>%
+#   select(pid,unique_id,pdx,NHSO_policy_des,unique_var_pid_pdx)
 
 
 
@@ -332,33 +331,30 @@ test <- tele %>%
   mutate(unique_var_pid_pdx = ifelse(row_number() == 1, 1, 0)) %>%
   ungroup()
 
-
+# select variable 
 test2 <- test %>%
   select(pid,unique_id,NHSO_policy_des,unique_var_pid_pdx)
 
+#group unique for check people uses telemedicine more than 1 desease
 test3 <- test2 %>%
-  group_by(unique_id) %>%
+  group_by(unique_id,NHSO_policy_des) %>%
   count(unique_var_pid_pdx)
 
 test4 <- test3 %>%
   filter(unique_var_pid_pdx == 1 , n >1 )
 
+#count unique patient telemedicine service (unique pid-disease)
 test5 <- test2 %>%
   filter(unique_var_pid_pdx == 1) %>%
   group_by(NHSO_policy_des) %>%
   count() 
 
-
+#service all for unique pid-disease 
+#unique pid = 110,153 ,unique(pid,disease =116,100)
 sum(test5$n)
 
 
-glimpse(test)
 
-test %>%
-  filter(unique_var_pid_pdx == 1) %>%
-  group_by(NHSO_policy_des) %>%
-  summarise(male = sum(gender))
-  
 
 
 
