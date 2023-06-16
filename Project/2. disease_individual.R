@@ -307,6 +307,8 @@ summarise_visit_pid <- visit_by_pid %>%
     iqr = IQR(n),
     mode = Modes(visit_by_pid$n))
 
+ex <- data.frame(summarise_visit_pid)
+
 # ggplot(data = cc ,mapping =  aes(x = pid ,y = n )) +
 #   geom_point()
 
