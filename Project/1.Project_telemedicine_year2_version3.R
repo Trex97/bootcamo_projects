@@ -47,12 +47,14 @@ pdx <- tele %>%
 
 #count summary unique 
 tele <- tele %>%
+  arrange(pid,new_date) %>%
   mutate(unique_id = group_indices(., pid))
 glimpse(tele)
 print(max(tele$unique_id)) #have patient 110153 person 
 
 # create variable for count unique first service 
 tele <- tele %>%
+  arrange(unique_id,new_date) %>%
   mutate(unique_var = ifelse(duplicated(pid), 0, 1))
 
 sum(tele$unique_var)
@@ -758,31 +760,36 @@ result_alldisease <- figure_Asthma+figure_Cancers+figure_Diabetes+figure_hyperte
 
 glimpse(tele)
 
+
+
+# GIF Part ----------------------------------------------------------------
+
+
 #GIF. disease trend animation
 # libraries:
-library(ggplot2)
-library(gganimate)
-library(babynames)
-library(hrbrthemes)
-
-
-policy3 <- tele %>%
-  group_by(NHSO_policy,NHSO_policy_des,year) %>%
-  count()
-
-test <- policy3 %>%
-  ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
-  geom_line(size = 1.5) +
-  geom_point() +
-  scale_color_viridis(discrete = TRUE) +
-  ggtitle("Trend telemedicine service") +
-  theme_minimal() +
-  ylab("Number of service") +
-  transition_reveal(year)
-
-
-# Save at gif:
-anim_save("gif_disease.gif", animation = test)
+# library(ggplot2)
+# library(gganimate)
+# library(babynames)
+# library(hrbrthemes)
+# 
+# 
+# policy3 <- tele %>%
+#   group_by(NHSO_policy,NHSO_policy_des,year) %>%
+#   count()
+# 
+# test <- policy3 %>%
+#   ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
+#   geom_line(size = 1.5) +
+#   geom_point() +
+#   scale_color_viridis(discrete = TRUE) +
+#   ggtitle("Trend telemedicine service") +
+#   theme_minimal() +
+#   ylab("Number of service") +
+#   transition_reveal(year)
+# 
+# 
+# # Save at gif:
+# anim_save("gif_disease.gif", animation = test)
 
 
 
@@ -858,6 +865,35 @@ agegroup_asthma <- tele %>%
 
 
 
+
+##* WHERE -> trand top 5 pdx by month 
+
+
+count_pdx_top5 <- tele %>%
+  group_by(pdx) %>%
+  count() %>%
+  arrange(desc(n)) %>%
+  head(5)
+
+list_pdx_top5 <- count_pdx_top5$pdx
+
+data_pdx_top5 <- tele %>%
+  filter(pdx %in% list_pdx_top5 )
+
+glimpse(data_pdx_top5)
+
+data_pdx_top5 <- data_pdx_top5 %>%
+  group_by(pdx,year_month) %>%
+  count()
+
+data_pdx_top5 %>%
+  ggplot( aes(x=year_month, y=n, group=pdx, color=pdx)) +
+  geom_line(size =1 )+
+  theme_minimal()+
+  theme(axis.text = element_text(angle = 90, hjust = 1))
+
+
+#top 5 each motnh 
 top5_pdx_month <- tele %>%
   select(year_month,pdx) %>%
   group_by(year_month, pdx) %>% 
@@ -873,3 +909,4 @@ top5_pdx_month2 %>%
   geom_line(size =1.5 )+
   theme_minimal()+
   theme(axis.text = element_text(angle = 90, hjust = 1))
+
