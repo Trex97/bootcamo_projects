@@ -15,8 +15,7 @@ library(data.table)
 library(patchwork)
 
 # Import data  ------------------------------------------------------------
-setwd("C:/Users/thanayut.s/Desktop/TELEMEDICINE_YEAR2")
-df <- readRDS("C:/Users/thanayut.s/Desktop/TELEMEDICINE_YEAR2/NHSOnew1.rds")
+df <- readRDS("~/Desktop/Project_telemed_year2/1. Data telemedicine/5. Data_P_toon /NHSOnew1.rds")
 
 
 # Change variable to lower case -------------------------------------------
@@ -43,8 +42,55 @@ apply(tele,MARGIN = 2,check_na)
 pdx <- tele %>%
   count(pdx)
 
-# Gen variable for unique  ------------------------------------------------
 
+
+## Manage about date_adm {viriable date}
+# copy variable date_adm for separate 
+tele <- tele %>%
+  mutate(date_adm2 = date_adm)
+#separate date_adm 
+tele <- tele %>%
+  separate(date_adm2,c("d","m","y"))
+glimpse(tele)
+#change thai year to global year 
+tele <- tele %>%
+  mutate(yy = as.numeric(y)) %>%
+  mutate(yy= yy -543 )
+
+#change month from 1,2,3 to 01,02,03
+tele <- tele %>%
+  mutate(mm = as.numeric(m)) 
+tele$mm <- sprintf("%02d",tele$mm)
+
+#change date from 1,2,3 to 01,02,03
+tele <- tele %>%
+  mutate(dd = as.numeric(d)) 
+tele$dd <- sprintf("%02d",tele$dd)
+
+##glue new format for new_date 
+tele <- tele %>%
+  mutate(new_date = glue("{dd}-{mm}-{yy}"))
+glimpse(tele)
+
+##re type variable to date 
+tele$new_date <- dmy(tele$new_date)
+glimpse(tele)
+
+##create new variable day, month, year, weekday, fullmonth 
+tele <- tele %>%
+  mutate(day = day(new_date),
+         month = month(new_date),
+         year = year(new_date),
+         full_month = months(new_date,abbr = F),
+         full_month2 = months(new_date,abbr = T),
+         week_day = weekdays(new_date,abbr = FALSE))
+glimpse(tele)
+
+tele <- tele %>%
+  mutate(year_month =format(tele$new_date, "%Y-%m"))
+
+
+# Gen variable for unique  ------------------------------------------------
 #count summary unique 
 tele <- tele %>%
   arrange(pid,new_date) %>%
@@ -76,7 +122,7 @@ tele <- tele %>%
   mutate(gender = factor(sex,
                          levels =c(1,2),
                          labels = c('male','female')))
-tele %>%
+ex_cel<-tele %>%
   count(gender)
 #   gender      n
 #1:   male 122649
@@ -385,6 +431,8 @@ policy <- tele %>%
   group_by(NHSO_policy,NHSO_policy_des,year_month) %>%
   count()
 
+install.packages("viridis")
+library(viridis)
 library(tidyverse)
 library(hrbrthemes)
 library(kableExtra)
@@ -394,13 +442,14 @@ library(streamgraph)
 library(viridis)
 library(DT)
 library(plotly)
+
 figure_policy1 <- policy %>%
   ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=NHSO_policy_des,fill = NHSO_policy_des)) +
   geom_line(size = 1.5) +
-  geom_point(size = 3) +
   scale_color_viridis(discrete = TRUE) +
+  geom_point(size = 3) +
   scale_color_manual(values=c("darkred", "darkblue", "darkgreen", "orange","purple","gold")) +
-  geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3)+
+  geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 1)+
   theme(legend.position="none", plot.title = element_text(size=30)) +
   ggtitle("disease treand") +
   theme_minimal() + 
@@ -425,7 +474,7 @@ figure_policy2  <-  policy2 %>%
   geom_line(data = policy2 , aes(group = NHSO_policy_des_2), color="darkblue", size=1.5, alpha=0.5) +
   geom_line(aes(color= NHSO_policy_des_2), color="#69b3a2", size=1.2 ) +
   scale_color_viridis(discrete = TRUE) +
-  theme_ipsum() +
+  theme_minimal() +
   theme(
     legend.position="none",
     plot.title = element_text(size=14),
@@ -436,12 +485,6 @@ figure_policy2  <-  policy2 %>%
   facet_wrap(~ NHSO_policy_des_2)
 
 figure_policy1/figure_policy2
-
-figure_policy1/result_alldisease
-
-
-
-
 
 
 #tele %>%
@@ -502,10 +545,10 @@ tele %>%
 
 
 #* 3.3 HNAME
-tele %>%
+top5_hcode <- tele %>%
   group_by(hname)%>%
   count() %>%
-  arrange(desc(n))
+  arrange(desc(n)) 
 #   hname                         n
 #1 รพ.สวนสราญรมย์             52952
 #2 รพ.รามาธิบดี  มหาวิทยาลัยมหิดล 41085
@@ -516,7 +559,9 @@ tele %>%
 #7 รพ.ศิริราช                   6844
 #8 รพ.ยุวประสาทไวทโยปถัมภ์       6429
 #9 สถาบันประสาทวิทยา            6232
-#10 รพ.สิรินธร                   5973
+#10 รพ.สิรินธร                  5973
+
+sum(top5_hcode$n)
 
 #* 3.4 Health region - 6 disease group 
 table(zone = tele$zone,NHSO_policy = tele$NHSO_policy_des)
@@ -559,49 +604,6 @@ check <- table(hospital_name = tele$hname,NHSO_policy = tele$NHSO_policy)
 head(check)
 
 #***Question 4. WHEN
-# copy variable date_adm for separate 
-tele <- tele %>%
-  mutate(date_adm2 = date_adm)
-#separate date_adm 
-tele <- tele %>%
-  separate(date_adm2,c("d","m","y"))
-glimpse(tele)
-#change thai year to global year 
-tele <- tele %>%
-  mutate(yy = as.numeric(y)) %>%
-  mutate(yy= yy -543 )
-
-#change month from 1,2,3 to 01,02,03
-tele <- tele %>%
-  mutate(mm = as.numeric(m)) 
-tele$mm <- sprintf("%02d",tele$mm)
-
-#change date from 1,2,3 to 01,02,03
-tele <- tele %>%
-  mutate(dd = as.numeric(d)) 
-tele$dd <- sprintf("%02d",tele$dd)
-
-##glue new format for new_date 
-tele <- tele %>%
-  mutate(new_date = glue("{dd}-{mm}-{yy}"))
-glimpse(tele)
-
-##re type variable to date 
-tele$new_date <- dmy(tele$new_date)
-glimpse(tele)
-
-##create new variable day, month, year, weekday, fullmonth 
-tele <- tele %>%
-  mutate(day = day(new_date),
-         month = month(new_date),
-         year = year(new_date),
-         full_month = months(new_date,abbr = F),
-         full_month2 = months(new_date,abbr = T),
-         week_day = weekdays(new_date,abbr = FALSE))
-glimpse(tele)
-
-
-
 #* 4.1 Number of visits grouped by month
 tele <- tele %>%
   mutate(year_month =format(tele$new_date, "%Y-%m"))
@@ -616,6 +618,7 @@ month_visit$year_month <- ym(month_visit$year_month)
 # Create a new variable for the year
 month_visit$year <- format(month_visit$year_month, "%Y")
 
+
 histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill = n)) +
   geom_col() +
   theme_minimal() +
@@ -626,14 +629,30 @@ histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill
   scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 5)) +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
   geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
-  scale_color_manual(values = c("#69b3a2", "#FF69B4", "#ADFF2F"))
+  scale_color_manual(values = c("#69b3a2", "#F47695", "#959359"))+
+  annotate("rect", xmin = ymd("2021-04-01"), xmax = ymd("2021-05-01"), ymin = 0, ymax = 25000,fill= "orange",
+           alpha = .2)+
+  geom_rect(aes(xmin = ymd("2021-04-01"), xmax = ymd("2021-05-01"), ymin = 0, ymax = 25000),
+            fill = NA, color = "orange", linetype = "dashed")+
+  annotate("rect", xmin = ymd("2021-06-01"), xmax = ymd("2021-08-01"), ymin = 0, ymax = 25000,fill= "orange",
+           alpha = .2)+
+  geom_rect(aes(xmin = ymd("2021-06-01"), xmax = ymd("2021-08-01"), ymin = 0, ymax = 25000),
+            fill = NA, color = "orange", linetype = "dashed")+
+  annotate("rect", xmin = ymd("2021-12-01"), xmax = ymd("2022-03-01"), ymin = 0, ymax = 25000,fill= "orange",
+           alpha = .2)+
+  geom_rect(aes(xmin = ymd("2021-12-01"), xmax = ymd("2022-03-01"), ymin = 0, ymax = 25000),
+            fill = NA, color = "orange", linetype = "dashed")+
+  annotate(geom="text",x= ymd("2021-04-15"),col ="black",angle = 0, y=26000, label = "Alpha wave")+
+  annotate(geom="text",x= ymd("2021-07-01"),col ="black",angle = 0, y=26000, label = "Delta wave")+
+  annotate(geom="text",x= ymd("2022-01-15"),col ="black",angle = 0, y=26000, label = "Omicron wave")
+  
 
+histogram
 
 #*4.2 Number of visits <-->  6 disease gr. grouped by month
 #*
 # Libraries
 library(tidyverse)
-library(hrbrthemes)
 library(kableExtra)
 options(knitr.table.format = "html")
 library(babynames)
@@ -730,6 +749,7 @@ figure_mental <- policy %>%
   theme(legend.position="none") +
   theme_minimal() +
   ylab("Number of service")+
+  xlab("Month") +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
   geom_label( x="2022-08", y=7000, label="Mental health service", size=5, color="#69b3a2") +
   theme(
@@ -758,9 +778,6 @@ figure_Other <- policy %>%
 result_alldisease <- figure_Asthma+figure_Cancers+figure_Diabetes+figure_hypertension+figure_mental+figure_Other
 
 
-glimpse(tele)
-
-
 
 # GIF Part ----------------------------------------------------------------
 
@@ -773,11 +790,15 @@ glimpse(tele)
 # library(hrbrthemes)
 # 
 # 
+# install.packages("gganimate")
+# library(gganimate)
+# 
+# #gif year
 # policy3 <- tele %>%
 #   group_by(NHSO_policy,NHSO_policy_des,year) %>%
 #   count()
 # 
-# test <- policy3 %>%
+# figure_gif_disease_year <- policy3 %>%
 #   ggplot(aes(x = year, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
 #   geom_line(size = 1.5) +
 #   geom_point() +
@@ -789,7 +810,32 @@ glimpse(tele)
 # 
 # 
 # # Save at gif:
-# anim_save("gif_disease.gif", animation = test)
+# anim_save("gif_disease.gif", animation = figure_gif_disease_year)
+# 
+# 
+# ##gif month 1-29 
+# policy4 <- tele %>%
+#   group_by(NHSO_policy,NHSO_policy_des,year,year_month) %>%
+#   count()
+# 
+# policy5 <- policy4 %>%
+#   group_by(year_month) %>%
+#   mutate(number_month = group_indices())
+# 
+# figure_gif_disease_month <- policy5 %>%
+#   ggplot(aes(x = number_month, y = n, group = NHSO_policy_des, color = NHSO_policy_des)) +
+#   geom_line(size = 1.5) +
+#   geom_point() +
+#   scale_color_viridis(discrete = TRUE) +
+#   ggtitle("Trend telemedicine service") +
+#   theme_minimal() +
+#   ylab("Number of service") +
+#   xlab("Number of month")+
+#   transition_reveal(number_month)
+# 
+# 
+# # Save at gif:
+# anim_save("gif_disease.gif", animation = figure_gif_disease_month)
 
 
 
@@ -909,4 +955,3 @@ top5_pdx_month2 %>%
   geom_line(size =1.5 )+
   theme_minimal()+
   theme(axis.text = element_text(angle = 90, hjust = 1))
-
