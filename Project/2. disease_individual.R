@@ -285,14 +285,66 @@ anim_save("gif_disease.gif", animation = test)
 
 
 #-------------------------------------------------------------------------------------
+case <- tele %>%
+  filter(unique_id  %in% 94103)
+
+case %>%
+  group_by(pdx) %>%
+  count()
+
+
 
 # count_frequency_of_users
 
 visit_by_pid <- tele %>%
-  group_by(pid) %>%
+  group_by(pid,unique_id) %>%
   count()
 
+# count_frequency_of_users [NHSO_policy_des - frequency]
+
+test <- tele %>%
+  group_by(pid,unique_id,NHSO_policy_des) %>%
+  count() %>%
+  filter(n >= 50 )
+
+nee <- "t51+4Jqc+wmgyffb40Uw+w=="
+
+nee <- tele %>%
+  filter(pid %in% nee)
+
+nee %>%
+  count(NHSO_policy_des)
+
+aa <- test$pid
+
+test <- tele %>%
+  filter(pid %in% aa) %>%
+  count(age)
+
+
+
+
 visit_by_pid <- data.frame(visit_by_pid)
+
+visit_by_pid <- visit_by_pid %>%
+  mutate(cri = case_when(
+    n == 1 ~ 1,
+    n >=2 & n<= 4 ~ 2,
+    n > 4 ~ 3
+  ))
+
+table_visit_by_pid <-  visit_by_pid %>%
+  group_by(cri) %>%
+  count()
+# cri     n
+#   1     1 65525
+# 2     2 31746
+# 3     3 12882
+
+table_visit_by_pid <- table_visit_by_pid %>%
+  mutate(percent = round(n/sum(table_visit_by_pid$n),2))
+
+
 
 summarise_visit_pid <- visit_by_pid %>%
   summarise(
@@ -356,7 +408,31 @@ test5 <- test2 %>%
 sum(test5$n)
 
 
+check <- df %>%
+  group_by(sub_fund) %>%
+  count()
+
+check <- df %>%
+  filter(sub_fund == "DRUG_DELIVERY") %>%
+  group_by(hname) %>%
+  count()
+
+glimpse(tele)
+check2 <- tele %>%
+  group_by(hname,unique_id) %>%
+  count()
+
+list_tele <- tele$pid
 
 
+delivery_tele <- df %>%
+  filter(pid %in% list_tele)
+
+check <- tele %>%
+  filter(hname == "รพ.สวนสราญรมย์")
+
+summary(unique(check$pid)
+length(unique(check$pid))
+length(unique(tele$pid))
 
 
