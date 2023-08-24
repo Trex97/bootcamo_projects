@@ -431,17 +431,17 @@ policy <- tele %>%
   group_by(NHSO_policy,NHSO_policy_des,year_month) %>%
   count()
 
-install.packages("viridis")
+#install.packages("viridis")
 library(viridis)
 library(tidyverse)
-library(hrbrthemes)
-library(kableExtra)
+#library(hrbrthemes)
+#library(kableExtra)
 options(knitr.table.format = "html")
-library(babynames)
-library(streamgraph)
+#library(babynames)
+#library(streamgraph)
 library(viridis)
-library(DT)
-library(plotly)
+#library(DT)
+#library(plotly)
 
 figure_policy1 <- policy %>%
   ggplot( aes(x=year_month, y=n, group=NHSO_policy_des, color=NHSO_policy_des,fill = NHSO_policy_des)) +
@@ -955,3 +955,6 @@ top5_pdx_month2 %>%
   geom_line(size =1.5 )+
   theme_minimal()+
   theme(axis.text = element_text(angle = 90, hjust = 1))
+
+
+
