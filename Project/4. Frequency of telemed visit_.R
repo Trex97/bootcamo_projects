@@ -31,3 +31,29 @@ table(test3$NHSO_policy_des,test3$cri)
 # Mental health            17317             4394
 # Other                    38083             3922
 
+# ตัวอย่างข้อมูล
+data <- data.frame(
+  group = rep(c("A", "B", "C"), each = 100),
+  value = c(rnorm(100), rnorm(100, mean = 2), rnorm(100, mean = -2))
+)
+
+data <- tele %>%
+  group_by(pid,NHSO_policy_des) %>%
+  count()
+
+# สร้างกราฟ boxplot หลายกล่อง
+boxplot <- ggplot(data, aes(x = NHSO_policy_des, y = n, fill = NHSO_policy_des)) +
+  geom_boxplot() +
+  theme_minimal()
+
+boxplot
+
+glimpse(tele)
+
+province <- tele%>%
+  group_by(province_name,zone) %>%
+  count() %>%
+  arrange(zone) %>%
+  arrange(desc(n))
+  
+
