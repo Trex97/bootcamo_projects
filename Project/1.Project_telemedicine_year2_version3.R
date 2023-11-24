@@ -189,6 +189,20 @@ tele <- tele %>%
     age >= 60 ~ "4"
   ))
 
+#**Average number of visit per patient [Min - Max; SD] (time/person)
+count_visit <- tele %>%
+  group_by(unique_id) %>%
+  count()
+
+count_visit <- data.frame(count_visit)
+class(count_visit)
+
+count_visit %>%
+  summarise(
+    mean = mean(n),
+    sd = sd(count_visit$n))
+# mean      sd
+# 2.351702 2.96384
 
 tele <- tele %>%
   mutate(age_group = factor(age_group,
@@ -217,6 +231,30 @@ age_group_unique <- tele %>%
 #3: age group 25-59 42004  38.13%
 #4:   age group 60+ 53204   48.3%
 
+##Number of Visit (nubmer of pateint) [Percentage]
+frequency_unique <- tele %>%
+  group_by(unique_id) %>%
+  count()
+
+frequency_patient <- frequency_unique %>% 
+  mutate(label = case_when(
+    n <= 1 ~ "1time" ,
+    n == 2 ~ "2time",
+    n == 3 ~ "3time",
+    n == 4 ~ "4time",
+    n >= 5 ~ "more than 5 time"
+  ))
+
+frequency_patient <- frequency_patient %>%
+  group_by(label) %>%
+  count()
+
+frequency_patient <- data.frame(frequency_patient)
+
+frequency_patient <- frequency_patient %>%
+  mutate(percent = round((n/sum(n))*100,2))
+
+
 #* Table age_group-sex
 gender_table <- table(tele$age_group, tele$gender)
 percentage_table <- round(prop.table(gender_table, margin = 1) * 100)
@@ -235,11 +273,10 @@ result <- data.frame(result)
 
 #***Question 2. WHAT
 #* 2.1 TOP PDX 
-tele %>%
+top_pdx <-tele %>%
   group_by(pdx) %>%
   count() %>%
-  arrange(desc(n)) %>%
-  head(20)
+  arrange(desc(n))
 #1 I10   32729
 #2 E119  21574
 #3 F2000  9035
@@ -260,6 +297,10 @@ tele %>%
 #18 C509   1981
 #19 F321   1945
 #20 I251   1849
+
+top_pdx <- data.frame(top_pdx)
+top_pdx %>%
+  mutate(percent = round(n/sum(n)*100,2))
 
 
 #* 2.2  22 Disease group (ICD10 chapters)
@@ -617,18 +658,19 @@ month_visit$year_month <- ym(month_visit$year_month)
 
 # Create a new variable for the year
 month_visit$year <- format(month_visit$year_month, "%Y")
-
-
+library(scales) 
+glimpse(month_visit)
 histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill = n)) +
   geom_col() +
   theme_minimal() +
-  xlab("Timeline") +
+  xlab("Month-Year") +
   scale_fill_gradient(low = "yellow", high = "red") +
-  ylab("Visit") +
+  ylab("Number of visits") +
+  scale_y_continuous(labels = scales::comma) + 
   geom_text(aes(label = scales::comma(n)), vjust = -0.5, size = 3) +
-  scale_x_date(date_labels = "%b-%y", breaks = '1 month', expand = c(0.001, 5)) +
+  scale_x_date(date_labels = "%b-%Y", breaks = '1 month', expand = c(0.001, 5)) +
   theme(axis.text = element_text(angle = 90, hjust = 1))+
-  geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
+  #geom_smooth(aes(group = year, color = year), method = "lm", se = FALSE) +
   scale_color_manual(values = c("#69b3a2", "#F47695", "#959359"))+
   annotate("rect", xmin = ymd("2021-04-01"), xmax = ymd("2021-05-01"), ymin = 0, ymax = 25000,fill= "orange",
            alpha = .2)+
@@ -642,9 +684,9 @@ histogram <- ggplot(data = month_visit, mapping = aes(x = year_month,y = n ,fill
            alpha = .2)+
   geom_rect(aes(xmin = ymd("2021-12-01"), xmax = ymd("2022-03-01"), ymin = 0, ymax = 25000),
             fill = NA, color = "orange", linetype = "dashed")+
-  annotate(geom="text",x= ymd("2021-04-15"),col ="black",angle = 0, y=26000, label = "Alpha wave")+
-  annotate(geom="text",x= ymd("2021-07-01"),col ="black",angle = 0, y=26000, label = "Delta wave")+
-  annotate(geom="text",x= ymd("2022-01-15"),col ="black",angle = 0, y=26000, label = "Omicron wave")
+  annotate(geom="text",x= ymd("2021-04-20"),col ="black",angle = 0, y=26000, label = "Alpha")+
+  annotate(geom="text",x= ymd("2021-07-7"),col ="black",angle = 0, y=26000, label = "Delta")+
+  annotate(geom="text",x= ymd("2022-01-20"),col ="black",angle = 0, y=26000, label = "Omicron")
   
 
 histogram
@@ -957,4 +999,7 @@ top5_pdx_month2 %>%
   theme(axis.text = element_text(angle = 90, hjust = 1))
 
 
+#------------------------
+unique_tt <- tele %>%
+  filter(unique_var == 1 )
 
